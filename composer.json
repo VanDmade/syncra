@@ -1,0 +1,18 @@
+{
+    "name": "vandmade/syncra",
+    "description": "Library of APIs that could be useful to really any SaaS.",
+    "type": "package",
+    "license": "Apache License",
+    "autoload": {
+        "psr-4": {
+            "VanDmade\\Syncra\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Michael VanDerwerker",
+            "email": "michaelvanderwerkerllc@gmail.com"
+        }
+    ],
+    "require": {}
+}
