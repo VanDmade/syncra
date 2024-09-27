@@ -14,5 +14,8 @@
             "email": "michaelvanderwerkerllc@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+        "guzzlehttp/guzzle": "^7.0.1",
+        "illuminate/support": "^11.3"
+    }
 }

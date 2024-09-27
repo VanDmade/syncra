@@ -7,6 +7,11 @@ use Illuminate\Support\ServiceProvider;
 class SyncraServiceProvider extends ServiceProvider
 {
 
+    public function boot(): void
+    {
+        $this->loadMigrationsFrom(__DIR__.'/../migrations');
+    }
+
     public function register(): void
     {
         $this->publishes([
