@@ -3,35 +3,29 @@
 namespace VanDmade\Syncra\Google;
 
 use Illuminate\Support\Facades\Http;
-use Illuminate\Http\Request;
-use Auth;
 use Exception;
 
 class OAuth
 {
 
     /**************************************************************************\
-     * Executes the entire library of Tablelify.
-     * 
-     * NOTE: All static methods within this class can be used separately in
-     *    order to append logic or replace Tablelify functionality as needed.
+     * Creates the URL for the whatever scopes the developer needs from the user
      * 
      * @param array|string $scopes List of scope urls that are being requested 
+     * @param string $state Unique ID use to authenticate the request on return
      * 
-     * @return array The default response of the Tablelify class 
+     * @return strubg The url that will be used to link the google account
     \**************************************************************************/
-    public static function url($scopes)
+    public static function url($scopes, $state)
     {
         // Makes 100% sure that the client ID and Secret are present
         if (is_null(env('SYNCRA_GOOGLE_CLIENT_ID')) || is_null('SYNCRA_GOOGLE_CLIENT_SECRET')) {
-            throw new Exception('Your developer needs to fully setup Syncra\'s Google Library.', 500);
+            throw new Exception(__('syncra/google.errors.not_setup'), 500);
         }
         // Turns the list of scopes into a string with the scopes separated by commas
         if (is_array($scopes)) {
             $scopes = implode(' ', $scopes);
         }
-        // Generates the state for the request
-        $state = Models\Authentication::generateState();
         $parameters = [
             'scope='.$scopes,
             'access_type=offline',
@@ -40,68 +34,44 @@ class OAuth
             'redirect_uri='.config('syncra.google.redirect_uri'),
             'client_id='.env('SYNCRA_GOOGLE_CLIENT_ID'),
         ];
-        $url = config('syncra.google.url').'?'.implode('&', $parameters);
-        // Store the State and Scope
-        Models\Authentication::create([
-            'state' => $state,
-            'scopes' => json_encode(explode(' ', $scopes)),
-        ]);
-        return $url;
+        return config('syncra.google.url').'?'.implode('&', $parameters);
     }
 
     /**************************************************************************\
      * Exchanges the callback code for an actual access and refresh token
      * 
-     * @param object $request Laravel Request
+     * @param string $code Authentication code from the Oauth response
      * 
-     * @return boolean 
+     * @return array The response from the Google server with the access and
+     *    refresh token as well as when this code will expire
     \**************************************************************************/
-    public static function exchange(Request $request)
+    public static function exchange($code)
     {
-        try {
-            $authentication = Models\Authentication::where('state', '=', $request->input('state'))
-                ->where('created_at', '>=', date('Y-m-d H:i:s', strtotime('-15 minutes')))
-                ->first();
-            // Validates that the state and the scopes match the initial request to prevent any malicious behavior
-            if (!isset($authentication->id) ||
-                $request->input('scope') != implode(' ', json_decode($authentication->scopes, true))) {
-                throw new Exception('The request was not found.', 404);
-            }
-            // Checks the code to make sure it's defined
-            if (is_null($code = $request->input('code') ?? null)) {
-                throw new Exception('The code was not found.', 404);
-            }
-            $response = Http::post('https://oauth2.googleapis.com/token', [
-                'code' => $code,
-                'client_id' => env('SYNCRA_GOOGLE_CLIENT_ID'),
-                'client_secret' => env('SYNCRA_GOOGLE_CLIENT_SECRET'),
-                'redirect_uri' => config('syncra.google.redirect_uri'),
-                'grant_type' => 'authorization_code', 
-            ])->json();
-            // Updates the authentication entry with the new tokens
-            $authentication->access_token = $response['access_token'];
-            $authentication->refresh_token = $response['refresh_token'];
-            $authentication->expires_at = date('Y-m-d H:i:s', strtotime('+'.$response['expires_in'].' seconds'));
-            $authentication->save();
-            return true;
-        } catch (Exception $error) {
-            // TODO :: Log Error
-            return false;
-        }
+        return Http::post(config('syncra.google.exchange_uri'), [
+            'code' => $code,
+            'client_id' => env('SYNCRA_GOOGLE_CLIENT_ID'),
+            'client_secret' => env('SYNCRA_GOOGLE_CLIENT_SECRET'),
+            'redirect_uri' => config('syncra.google.redirect_uri'),
+            'grant_type' => 'authorization_code', 
+        ])->json();
     }
 
     /**************************************************************************\
-     * Executes the entire library of Tablelify.
+     * Refreshes the access token using the refresh token if it expired.
      * 
-     * @return array The default response of the Tablelify class 
+     * @param string $token Refresh token that you want to refresh
+     * 
+     * @return array The response from the Google server with the new access
+     *    token and expiration time
     \**************************************************************************/
-    public function refresh()
+    public static function refresh($token)
     {
-        try {
-
-        } catch (Exception $error) {
-            return $error;
-        }
+        return Http::post(config('syncra.google.exchange_uri'), [
+            'refresh_token' => $token,
+            'grant_type' => 'refresh_token',
+            'client_id' => env('SYNCRA_GOOGLE_CLIENT_ID'),
+            'client_secret' => env('SYNCRA_GOOGLE_CLIENT_SECRET'),
+        ])->json();
     }
 
 }
