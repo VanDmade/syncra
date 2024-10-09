@@ -34,9 +34,11 @@ class Sheets
         ];
     }
 
-    public static function get($id, $accessToken)
+    public static function get($id, $accessToken, $range = null)
     {
-        return Http::get('https://sheets.googleapis.com/v4/spreadsheets/'.$id.'/values/Drinks!A1:D5?access_token='.$accessToken)->json();
+        $url = 'https://sheets.googleapis.com/v4/spreadsheets/'.$id.(!is_null($range) ? '/values/'.$range : '');
+        $response = Http::get($url.'?access_token='.$accessToken)->json();
+        return $response;
     }
 
     public static function sheet($id, $accessToken)
