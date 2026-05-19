@@ -19,7 +19,7 @@ class OAuth
     public static function url($scopes, $state)
     {
         // Makes 100% sure that the client ID and Secret are present
-        if (is_null(env('SYNCRA_GOOGLE_CLIENT_ID')) || is_null(env('SYNCRA_GOOGLE_CLIENT_SECRET'))) {
+        if (is_null(config('syncra.google.client_id')) || is_null(config('syncra.google.client_secret'))) {
             throw new Exception(__('syncra/google.errors.not_setup'), 500);
         }
         // Turns the list of scopes into a string with the scopes separated by commas
@@ -32,7 +32,7 @@ class OAuth
             'response_type=code',
             'state='.$state,
             'redirect_uri='.config('syncra.google.redirect_uri'),
-            'client_id='.env('SYNCRA_GOOGLE_CLIENT_ID'),
+            'client_id='.config('syncra.google.client_id'),
         ];
         return config('syncra.google.url').'?'.implode('&', $parameters);
     }
@@ -50,8 +50,8 @@ class OAuth
         return Http::withOptions(['verify' => config('syncra.ssl_verify', true)])
             ->post(config('syncra.google.exchange_uri'), [
                 'code' => $code,
-                'client_id' => env('SYNCRA_GOOGLE_CLIENT_ID'),
-                'client_secret' => env('SYNCRA_GOOGLE_CLIENT_SECRET'),
+                'client_id' => config('syncra.google.client_id'),
+                'client_secret' => config('syncra.google.client_secret'),
                 'redirect_uri' => config('syncra.google.redirect_uri'),
                 'grant_type' => 'authorization_code',
             ])->json();
@@ -71,8 +71,8 @@ class OAuth
             ->post(config('syncra.google.exchange_uri'), [
                 'refresh_token' => $token,
                 'grant_type' => 'refresh_token',
-                'client_id' => env('SYNCRA_GOOGLE_CLIENT_ID'),
-                'client_secret' => env('SYNCRA_GOOGLE_CLIENT_SECRET'),
+                'client_id' => config('syncra.google.client_id'),
+                'client_secret' => config('syncra.google.client_secret'),
             ])->json();
     }
 

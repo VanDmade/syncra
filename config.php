@@ -2,7 +2,7 @@
 
 return [
     'google' => [
-        'client_id'     => env('SYNCRA_GOOGLE_CLIENT_ID'),
+        'client_id' => env('SYNCRA_GOOGLE_CLIENT_ID'),
         'client_secret' => env('SYNCRA_GOOGLE_CLIENT_SECRET'),
         // URL endpoint for the OAuth from Google
         'url' => 'https://accounts.google.com/o/oauth2/v2/auth',
