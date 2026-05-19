@@ -19,7 +19,7 @@ class Sheets
         foreach ($attributes as $key => $value) {
             $parameters[] = $key.'='.$value;
         }
-        $response = Http::get('https://www.googleapis.com/drive/v3/files?'.implode('&', $parameters))->json();
+        $response = Http::withOptions(['verify' => config('syncra.ssl_verify', true)])->get('https://www.googleapis.com/drive/v3/files?'.implode('&', $parameters))->json();
         $files = [];
         foreach ($response['files'] ?? [] as $file) {
             $files[] = [
@@ -37,7 +37,7 @@ class Sheets
     public static function get($id, $accessToken, $range = null)
     {
         $url = 'https://sheets.googleapis.com/v4/spreadsheets/'.$id.(!is_null($range) ? '/values/'.$range : '');
-        $response = Http::get($url.'?access_token='.$accessToken)->json();
+        $response = Http::withOptions(['verify' => config('syncra.ssl_verify', true)])->get($url.'?access_token='.$accessToken)->json();
         return $response;
     }
 

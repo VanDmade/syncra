@@ -15,4 +15,6 @@ return [
     'code_timeout' => '900',
     // Unique value used when generating unique IDs
     'salt' => 'syncra-20240924',
+    // Set to false to disable SSL certificate verification (useful for local development)
+    'ssl_verify' => env('SYNCRA_SSL_VERIFY', true),
 ];

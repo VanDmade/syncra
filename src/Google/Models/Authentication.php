@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use VanDmade\Syncra\Google\OAuth;
 use Auth;
+use Exception;
 
 class Authentication extends Model
 {

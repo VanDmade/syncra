@@ -47,13 +47,14 @@ class OAuth
     \**************************************************************************/
     public static function exchange($code)
     {
-        return Http::post(config('syncra.google.exchange_uri'), [
-            'code' => $code,
-            'client_id' => env('SYNCRA_GOOGLE_CLIENT_ID'),
-            'client_secret' => env('SYNCRA_GOOGLE_CLIENT_SECRET'),
-            'redirect_uri' => config('syncra.google.redirect_uri'),
-            'grant_type' => 'authorization_code', 
-        ])->json();
+        return Http::withOptions(['verify' => config('syncra.ssl_verify', true)])
+            ->post(config('syncra.google.exchange_uri'), [
+                'code' => $code,
+                'client_id' => env('SYNCRA_GOOGLE_CLIENT_ID'),
+                'client_secret' => env('SYNCRA_GOOGLE_CLIENT_SECRET'),
+                'redirect_uri' => config('syncra.google.redirect_uri'),
+                'grant_type' => 'authorization_code',
+            ])->json();
     }
 
     /**************************************************************************\
@@ -66,12 +67,13 @@ class OAuth
     \**************************************************************************/
     public static function refresh($token)
     {
-        return Http::post(config('syncra.google.exchange_uri'), [
-            'refresh_token' => $token,
-            'grant_type' => 'refresh_token',
-            'client_id' => env('SYNCRA_GOOGLE_CLIENT_ID'),
-            'client_secret' => env('SYNCRA_GOOGLE_CLIENT_SECRET'),
-        ])->json();
+        return Http::withOptions(['verify' => config('syncra.ssl_verify', true)])
+            ->post(config('syncra.google.exchange_uri'), [
+                'refresh_token' => $token,
+                'grant_type' => 'refresh_token',
+                'client_id' => env('SYNCRA_GOOGLE_CLIENT_ID'),
+                'client_secret' => env('SYNCRA_GOOGLE_CLIENT_SECRET'),
+            ])->json();
     }
 
 }
