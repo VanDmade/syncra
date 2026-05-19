@@ -19,7 +19,7 @@ class OAuth
     public static function url($scopes, $state)
     {
         // Makes 100% sure that the client ID and Secret are present
-        if (is_null(config('syncra.google.client_id')) || is_null(config('syncra.google.client_secret'))) {
+        if (is_null(env('SYNCRA_GOOGLE_CLIENT_ID')) || is_null(env('SYNCRA_GOOGLE_CLIENT_SECRET'))) {
             throw new Exception(__('syncra/google.errors.not_setup'), 500);
         }
         // Turns the list of scopes into a string with the scopes separated by commas
