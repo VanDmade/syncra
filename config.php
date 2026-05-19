@@ -7,7 +7,7 @@ return [
         // URL endpoint for the OAuth from Google
         'url' => 'https://accounts.google.com/o/oauth2/v2/auth',
         // Route where the callback comes to
-        'redirect_uri' => env('SYNCRA_GOOGLE_REDIRECT_URI', 'http://localhost:8000/google/validate'),
+        'redirect_uri' => env('SYNCRA_GOOGLE_REDIRECT_URI', env('APP_URL').'/google/validate'),
         // Route where the token is exchanged or grabbed via the auth code
         'exchange_uri' => 'https://oauth2.googleapis.com/token',
         // List of all scopes that are allowed to be used within this application. Set this to NULL to allow all scopes
