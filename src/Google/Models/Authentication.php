@@ -46,12 +46,12 @@ class Authentication extends Model
         if ($state != $this->state) {
             throw new Exception(__('syncra/google.errors.state_does_not_match'), 500);
         }
-        // Turns the list of scopes into a string with the scopes separated by commas
-        if (is_array($scopes)) {
-            $scopes = implode(' ', $scopes);
-        }
         // Validates that the scopes match the initial request to prevent any malicious behavior
-        if ($scopes != implode(' ', $this->scopes)) {
+        $incomingScopes = is_array($scopes) ? $scopes : explode(' ', $scopes);
+        $storedScopes = $this->scopes;
+        sort($incomingScopes);
+        sort($storedScopes);
+        if ($incomingScopes != $storedScopes) {
             throw new Exception(__('syncra/google.errors.scopes_do_not_match'), 404);
         }
         if (strtotime($this->created_at) < strtotime('-'.config('syncra.code_timeout', 900).' seconds')) {
@@ -63,7 +63,9 @@ class Authentication extends Model
             throw new Exception(__('syncra/google.errors.access_token_missing'), 404);
         }
         $this->access_token = $response['access_token'];
-        $this->refresh_token = $response['refresh_token'];
+        if (!empty($response['refresh_token'])) {
+            $this->refresh_token = $response['refresh_token'];
+        }
         $this->expires_at = date('Y-m-d H:i:s', strtotime('+'.$response['expires_in'].' seconds'));
         if ($save) {
             $this->save();
