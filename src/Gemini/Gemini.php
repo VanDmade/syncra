@@ -5,7 +5,7 @@ namespace VanDmade\Syncra\Gemini;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use VanDmade\Syncra\DTOs\GeminiResponse;
+use VanDmade\Syncra\Gemini\DTOs\GeminiResponse;
 use VanDmade\Syncra\Gemini\Models\Request;
 use Exception;
 use Throwable;
