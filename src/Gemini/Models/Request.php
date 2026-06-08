@@ -58,7 +58,7 @@ class Request extends Model
         parent::boot();
         static::creating(function ($model) {
             $model->model = config('syncra.gemini.model');
-            $model->status = 'pending';
+            $model->status = is_null($model->status) ? 'pending' : $model->status;
             $model->user_id = Auth::check() ? Auth::id() : null;
         });
     }

@@ -21,11 +21,12 @@ class Gemini
     public function __construct()
     {
         $this->client = new Client([
-            'base_uri' => config('syncra.gemini.base_url'),
+            'base_uri' => rtrim(config('syncra.gemini.url'), '/').'/',
             'timeout' => 30,
+            'verify' => config('syncra.ssl_verify'),
         ]);
         $this->model = config('syncra.gemini.model');
-        $this->imageModel = config('syncra.gemini.image_model');
+        $this->imageModel = config('syncra.images.model');
     }
 
     public function send(
@@ -64,7 +65,7 @@ class Gemini
         $started = microtime(true);
         try {
             // Sends the information to Gemini for the response
-            $raw = $this->client->post('/models/'.$this->model.':generateContent', [
+            $raw = $this->client->post('models/'.$this->model.':generateContent', [
                 'query' => ['key' => config('syncra.gemini.api_key')],
                 'json' => $payload,
             ]);
