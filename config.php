@@ -13,7 +13,28 @@ return [
         // List of all scopes that are allowed to be used within this application. Set this to NULL to allow all scopes
         'allowed_scopes' => null,
     ],
-    // Total time between requesting access adn then exchanging for an access token
+    'images' => [
+        // The model used to look up images by ID for the `images()` accessor on
+        // Gemini requests. Defaults to Cuztomisable's Image model when installed.
+        'model' => class_exists(\VanDmade\Cuztomisable\Models\Image::class)
+            ? \VanDmade\Cuztomisable\Models\Image::class
+            : null,
+    ],
+    'gemini' => [
+        'api_key' => env('SYNCRA_GEMINI_API_KEY', null),
+        'model' => env('SYNCRA_GEMINI_MODEL', 'gemini-2.0-flash'),
+        // Base URL for Gemini API calls (no trailing slash). The package will append the right path for each request.
+        'url' => env('SYNCRA_GEMINI_URL', 'https://generativelanguage.googleapis.com/v1beta'),
+        // Record responses in the database
+        'record_responses' => true,
+        // Record prompts in the database
+        'record_prompts' => true,
+        // Deletes the entries after how many days. Set to null to never delete.
+        'delete_after_days' => 30,
+        // Deletes just the text within the prompts and responses, but keeps the metadata for analytics.
+        'delete_only_prompts_and_responses' => true,
+    ],
+    // Total time between requesting access and then exchanging for an access token
     'code_timeout' => '900',
     // Unique value used when generating unique IDs
     'salt' => 'syncra-20240924',
