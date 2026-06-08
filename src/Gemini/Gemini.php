@@ -5,7 +5,7 @@ namespace VanDmade\Syncra\Gemini;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use VanDmade\Syncra\Gemini\DTOs\GeminiResponse;
+use VanDmade\Syncra\Gemini\DTOs\Response;
 use VanDmade\Syncra\Gemini\Models\Request;
 use Exception;
 use Throwable;
@@ -32,7 +32,7 @@ class Gemini
         string $prompt,
         string|array|null $images = null,
         ?array $responseSchema = null
-    ): GeminiResponse {
+    ): Response {
         $imageIds = $images === null ? [] :
             (is_array($images) ? array_values($images) : [$images]);
         $parts = [['text' => $prompt]];
@@ -82,7 +82,7 @@ class Gemini
             $error = $error->getMessage();
         }
         $durationMs = (int) round((microtime(true) - $started) * 1000);
-        $result = new GeminiResponse(
+        $result = new Response(
             structured: $structured,
             data: $data,
             text: $text,
@@ -118,7 +118,7 @@ class Gemini
         string $prompt,
         string|array|null $images,
         ?array $responseSchema,
-        GeminiResponse $response,
+        Response $response,
         ?string $finishReason,
         ?int $promptTokens,
         ?int $completionTokens,

@@ -1,6 +1,6 @@
 <?php
 
-namespace VanDmade\Syncra\DTOs;
+namespace VanDmade\Syncra\Gemini\DTOs;
 
 /**
  * Wraps the parsed response from a Gemini request.
@@ -9,7 +9,7 @@ namespace VanDmade\Syncra\DTOs;
  * schema you sent. That parsed array lands in $data. The raw text (if any)
  * lands in $text. Check $structured to know which path to use.
  */
-class GeminiResponse
+class Response
 {
 
     public function __construct(
