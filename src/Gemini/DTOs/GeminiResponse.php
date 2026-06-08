@@ -17,34 +17,29 @@ class GeminiResponse
         public readonly ?array $data,
         public readonly ?string $text,
         public readonly string $model,
-        public readonly int $requestId,
     ) {}
 
     public static function fromStructured(
         array $data,
-        string $model,
-        int $requestId
+        string $model
     ): self {
         return new self(
             structured: true,
             data: $data,
             text: null,
             model: $model,
-            request_id: $requestId,
         );
     }
 
     public static function fromText(
         string $text,
-        string $model,
-        int $requestId
+        string $model
     ): self {
         return new self(
             structured: false,
             data: null,
             text: $text,
             model: $model,
-            request_id: $requestId,
         );
     }
 

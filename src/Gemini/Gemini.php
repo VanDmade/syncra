@@ -82,6 +82,12 @@ class Gemini
             $error = $error->getMessage();
         }
         $durationMs = (int) round((microtime(true) - $started) * 1000);
+        $result = new GeminiResponse(
+            structured: $structured,
+            data: $data,
+            text: $text,
+            model: $this->model,
+        );
         // Tracks the request and response for development purposes
         $record = $this->track(
             prompt: $prompt,
@@ -89,20 +95,14 @@ class Gemini
             responseSchema: $responseSchema,
             response: $result,
             finishReason: $candidate['finishReason'] ?? null,
-            promptTokens: $usage['promptTokenCount'] ?? nulls,
+            promptTokens: $usage['promptTokenCount'] ?? null,
             completionTokens: $usage['candidatesTokenCount'] ?? null,
             totalTokens: $usage['totalTokenCount'] ?? null,
             durationMs: $durationMs,
             status: $status,
             error: $error,
         );
-        return new GeminiResponse(
-            structured: $structured,
-            data: $data,
-            text: $text,
-            model: $this->model,
-            requestId: $record->id,
-        );
+        return $result;
     }
 
     public function lastRequest(?int $userId = null): ?Request
