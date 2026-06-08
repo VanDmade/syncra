@@ -17,29 +17,44 @@ class Response
         public readonly ?array $data,
         public readonly ?string $text,
         public readonly string $model,
+        public readonly string $status = 'pending',
+        public readonly ?string $error = null,
+        public readonly ?int $requestId = null
     ) {}
 
     public static function fromStructured(
         array $data,
-        string $model
+        string $model,
+        string $status = 'pending',
+        ?string $error = null,
+        ?int $requestId = null
     ): self {
         return new self(
             structured: true,
             data: $data,
             text: null,
             model: $model,
+            status: $status,
+            error: $error,
+            requestId: $requestId,
         );
     }
 
     public static function fromText(
         string $text,
-        string $model
+        string $model,
+        string $status = 'pending',
+        ?string $error = null,
+        ?int $requestId = null
     ): self {
         return new self(
             structured: false,
             data: null,
             text: $text,
             model: $model,
+            status: $status,
+            error: $error,
+            requestId: $requestId,
         );
     }
 

@@ -3,6 +3,7 @@
 namespace VanDmade\Syncra\Gemini;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use VanDmade\Syncra\Gemini\DTOs\Response;
@@ -32,8 +33,9 @@ class Gemini
     public function send(
         string $prompt,
         string|array|null $images = null,
-        ?array $responseSchema = null
-    ): Response {
+        ?array $responseSchema = null,
+        bool $returnRequest = false
+    ): Response|Request {
         $imageIds = $images === null ? [] :
             (is_array($images) ? array_values($images) : [$images]);
         $parts = [['text' => $prompt]];
@@ -78,23 +80,19 @@ class Gemini
                 $text = $rawText;
             }
             $usage = $body['usageMetadata'] ?? [];
-        } catch (Throwable $error) {
+        } catch (Throwable $exception) {
             $status = 'failed';
-            $error = $error->getMessage();
+            $error = $this->minimizeError($exception);
         }
         $durationMs = (int) round((microtime(true) - $started) * 1000);
-        $result = new Response(
-            structured: $structured,
-            data: $data,
-            text: $text,
-            model: $this->model,
-        );
         // Tracks the request and response for development purposes
         $record = $this->track(
             prompt: $prompt,
             images: $images,
             responseSchema: $responseSchema,
-            response: $result,
+            structured: $structured,
+            data: $data,
+            text: $text,
             finishReason: $candidate['finishReason'] ?? null,
             promptTokens: $usage['promptTokenCount'] ?? null,
             completionTokens: $usage['candidatesTokenCount'] ?? null,
@@ -103,7 +101,33 @@ class Gemini
             status: $status,
             error: $error,
         );
-        return $result;
+        if ($returnRequest) {
+            return $record;
+        }
+        return new Response(
+            structured: $structured,
+            data: $data,
+            text: $text,
+            model: $this->model,
+            status: $status,
+            error: $error,
+            requestId: $record->id,
+        );
+    }
+
+    private function minimizeError(Throwable $exception): string
+    {
+        if ($exception instanceof RequestException && $exception->hasResponse()) {
+            $body = (string) $exception->getResponse()->getBody();
+            $decoded = json_decode($body, true);
+            if ($decoded !== null) {
+                return json_encode($decoded);
+            }
+
+            return trim(preg_replace('/\s+/', ' ', $body));
+        }
+
+        return trim(preg_replace('/\s+/', ' ', $exception->getMessage()));
     }
 
     public function lastRequest(?int $userId = null): ?Request
@@ -119,7 +143,9 @@ class Gemini
         string $prompt,
         string|array|null $images,
         ?array $responseSchema,
-        Response $response,
+        bool $structured,
+        ?array $data,
+        ?string $text,
         ?string $finishReason,
         ?int $promptTokens,
         ?int $completionTokens,
@@ -132,13 +158,13 @@ class Gemini
             (is_array($images) ? array_values($images) : [$images]);
         return Request::create([
             'image_ids' => $imageIds,
-            'model' => $response->model,
+            'model' => $this->model,
             'prompt' => $prompt,
             'has_image' => $imageIds !== null,
             'response_schema' => $responseSchema,
-            'structured' => $response->structured,
-            'response_data' => $response->data,
-            'response_text' => $response->text,
+            'structured' => $structured,
+            'response_data' => $data,
+            'response_text' => $text,
             'finish_reason' => $finishReason,
             'prompt_tokens' => $promptTokens,
             'completion_tokens' => $completionTokens,
