@@ -14,6 +14,9 @@ use Throwable;
 class Gemini
 {
 
+    /** Maximum number of images allowed in a single request, to bound token cost. */
+    const MAX_IMAGES = 10;
+
     protected Client $client;
     protected string $model;
     protected ?string $imageModel = null;
@@ -38,6 +41,9 @@ class Gemini
     ): Response|Request {
         $imageIds = $images === null ? [] :
             (is_array($images) ? array_values($images) : [$images]);
+        if (count($imageIds) > self::MAX_IMAGES) {
+            throw new Exception('At most '.self::MAX_IMAGES.' images are allowed per request.', 422);
+        }
         $parts = [['text' => $prompt]];
         foreach ($imageIds as $imageId) {
             $image = $this->imageModel ? $this->imageModel::find($imageId) : null;
@@ -65,24 +71,34 @@ class Gemini
         $error = $finishReason = $promptTokens =
         $completionTokens = $totalTokens = $data = $text = null;
         $started = microtime(true);
-        try {
-            // Sends the information to Gemini for the response
-            $raw = $this->client->post('models/'.$this->model.':generateContent', [
-                'query' => ['key' => config('syncra.gemini.api_key')],
-                'json' => $payload,
-            ]);
-            $body = json_decode((string) $raw->getBody(), true);
-            $candidate = $body['candidates'][0] ?? null;
-            $rawText = $candidate['content']['parts'][0]['text'] ?? null;
-            if ($structured && $rawText !== null) {
-                $data = json_decode($rawText, true);
-            } else {
-                $text = $rawText;
+        $maxAttempts = 3;
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                // Sends the information to Gemini for the response
+                $raw = $this->client->post('models/'.$this->model.':generateContent', [
+                    'query' => ['key' => config('syncra.gemini.api_key')],
+                    'json' => $payload,
+                ]);
+                $body = json_decode((string) $raw->getBody(), true);
+                $candidate = $body['candidates'][0] ?? null;
+                $rawText = $candidate['content']['parts'][0]['text'] ?? null;
+                if ($structured && $rawText !== null) {
+                    $data = json_decode($rawText, true);
+                } else {
+                    $text = $rawText;
+                }
+                $usage = $body['usageMetadata'] ?? [];
+                break;
+            } catch (Throwable $exception) {
+                if ($attempt < $maxAttempts && $this->isTransientError($exception)) {
+                    // 503 (overloaded) or 429 (rate-limited) — back off and retry
+                    sleep(2 ** ($attempt - 1));
+                    continue;
+                }
+                $status = 'failed';
+                $error = $this->minimizeError($exception);
+                break;
             }
-            $usage = $body['usageMetadata'] ?? [];
-        } catch (Throwable $exception) {
-            $status = 'failed';
-            $error = $this->minimizeError($exception);
         }
         $durationMs = (int) round((microtime(true) - $started) * 1000);
         // Tracks the request and response for development purposes
@@ -115,6 +131,14 @@ class Gemini
         );
     }
 
+    private function isTransientError(Throwable $exception): bool
+    {
+        if ($exception instanceof RequestException && $exception->hasResponse()) {
+            return in_array($exception->getResponse()->getStatusCode(), [429, 503]);
+        }
+        return false;
+    }
+
     private function minimizeError(Throwable $exception): string
     {
         if ($exception instanceof RequestException && $exception->hasResponse()) {
@@ -123,10 +147,8 @@ class Gemini
             if ($decoded !== null) {
                 return json_encode($decoded);
             }
-
             return trim(preg_replace('/\s+/', ' ', $body));
         }
-
         return trim(preg_replace('/\s+/', ' ', $exception->getMessage()));
     }
 
