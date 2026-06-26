@@ -27,7 +27,7 @@ class Gemini
         $this->client = new Client([
             'base_uri' => rtrim(config('syncra.gemini.url'), '/').'/',
             'timeout' => 30,
-            'verify' => config('syncra.ssl_verify'),
+            'verify' => config('syncra.ssl_verify', true),
         ]);
         $this->model = config('syncra.gemini.model');
         $this->imageModel = config('syncra.images.model');
@@ -67,6 +67,13 @@ class Gemini
             ];
         }
         $structured = $responseSchema !== null;
+        $apiKey = config('syncra.gemini.api_key');
+        if (empty($apiKey)) {
+            throw new Exception(
+                'Gemini API key is not configured. Ensure SYNCRA_GEMINI_API_KEY is set and the config cache is up to date.',
+                500
+            );
+        }
         $status = 'completed';
         $error = $finishReason = $promptTokens =
         $completionTokens = $totalTokens = $data = $text = null;
@@ -76,7 +83,7 @@ class Gemini
             try {
                 // Sends the information to Gemini for the response
                 $raw = $this->client->post('models/'.$this->model.':generateContent', [
-                    'query' => ['key' => config('syncra.gemini.api_key')],
+                    'query' => ['key' => $apiKey],
                     'json' => $payload,
                 ]);
                 $body = json_decode((string) $raw->getBody(), true);
