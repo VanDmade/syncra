@@ -83,7 +83,7 @@ class Gemini
             try {
                 // Sends the information to Gemini for the response
                 $raw = $this->client->post('models/'.$this->model.':generateContent', [
-                    'query' => ['key' => $apiKey],
+                    'headers' => ['x-goog-api-key' => $apiKey],
                     'json' => $payload,
                 ]);
                 $body = json_decode((string) $raw->getBody(), true);
